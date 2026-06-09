@@ -1,0 +1,12 @@
+# Secrets
+.env
+
+# Generated deliverables
+outputs/*
+!outputs/.gitkeep
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
