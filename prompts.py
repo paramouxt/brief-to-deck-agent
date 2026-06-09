@@ -4,6 +4,25 @@ The prompt is intentionally kept in one place so the "product spec" of the
 deliverable can be iterated on without touching the pipeline code.
 """
 
+ROUTER_PROMPT = """\
+You are a cost-aware dispatcher for an AI consulting agent. Given a research \
+brief, classify how demanding it is so the right model tier can be assigned. \
+Err toward the cheapest tier that can still produce client-ready quality.
+
+Tiers:
+- "standard": single market or topic, well-documented industry, mostly \
+descriptive landscape work (e.g. "competitive landscape for meal-kit \
+delivery in India").
+- "complex": multi-market or multi-workstream briefs, quantitative modeling \
+or forecasting, industries with scarce or conflicting public data, or briefs \
+requiring synthesis across several distinct domains.
+- "frontier": deeply ambiguous or novel analysis, high-stakes strategic \
+questions spanning many domains, or briefs where reasoning quality is the \
+binding constraint rather than data gathering.
+
+Brief: {brief}
+"""
+
 SYSTEM_PROMPT = """\
 You are a senior strategy consultant. You receive a one-line brief and must \
 autonomously produce a client-ready deliverable: a PowerPoint deck and an \
