@@ -15,6 +15,7 @@ streams progress, downloads the generated files, and records run metrics.
 Usage:
     python agent.py "competitive landscape for meal-kit delivery in India"
     python agent.py "..." --model fable   # skip routing, force a model
+    python agent.py "..." --agent-mode direct
 """
 
 import argparse
@@ -27,7 +28,7 @@ from pathlib import Path
 
 import anthropic
 
-from prompts import ROUTER_PROMPT, SYSTEM_PROMPT
+from prompts import DIRECT_MODE_PROMPT, ROUTER_PROMPT, SYSTEM_PROMPT, TEAM_MODE_PROMPT
 
 MAX_TOKENS = 64000
 # Server-side tools pause every ~10 internal iterations (stop_reason
@@ -55,6 +56,10 @@ MODEL_SHORTHAND = {
     "sonnet": "claude-sonnet-4-6",
     "opus": "claude-opus-4-8",
     "fable": "claude-fable-5",
+}
+AGENT_MODES = {
+    "direct": DIRECT_MODE_PROMPT,
+    "team": TEAM_MODE_PROMPT,
 }
 
 ROUTER_SCHEMA = {
@@ -119,6 +124,26 @@ def choose_model(client: anthropic.Anthropic, brief: str) -> dict:
         }
 
 
+def build_system_blocks(agent_mode: str) -> list[dict]:
+    """Return cached system instructions for the selected work style."""
+    if agent_mode not in AGENT_MODES:
+        raise ValueError(f"unknown agent mode: {agent_mode}")
+    return [
+        {
+            "type": "text",
+            "text": SYSTEM_PROMPT,
+            # Cache the system prompt: repeat runs and pause_turn
+            # continuations reread it at ~10% of input price.
+            "cache_control": {"type": "ephemeral"},
+        },
+        {
+            "type": "text",
+            "text": AGENT_MODES[agent_mode],
+            "cache_control": {"type": "ephemeral"},
+        },
+    ]
+
+
 def stream_one_turn(client: anthropic.Anthropic, request: dict) -> anthropic.types.Message:
     """Run one streamed API call, printing live progress, and return the final message."""
     with client.messages.stream(**request) as stream:
@@ -179,7 +204,12 @@ def download_generated_files(client: anthropic.Anthropic, responses: list, outdi
     return saved
 
 
-def run(brief: str, outdir: Path, forced_model: str | None = None) -> int:
+def run(
+    brief: str,
+    outdir: Path,
+    forced_model: str | None = None,
+    agent_mode: str = "team",
+) -> int:
     client = anthropic.Anthropic()
     messages = [{"role": "user", "content": brief}]
     totals = {"input": 0, "output": 0, "cache_read": 0, "cache_write": 0}
@@ -188,6 +218,7 @@ def run(brief: str, outdir: Path, forced_model: str | None = None) -> int:
     start = time.monotonic()
 
     print(f"Brief: {brief}")
+    print(f"Agent mode: {agent_mode}")
     if forced_model:
         routing = {
             "model": forced_model,
@@ -204,15 +235,7 @@ def run(brief: str, outdir: Path, forced_model: str | None = None) -> int:
         request = {
             "model": model,
             "max_tokens": MAX_TOKENS,
-            "system": [
-                {
-                    "type": "text",
-                    "text": SYSTEM_PROMPT,
-                    # Cache the system prompt: repeat runs and pause_turn
-                    # continuations reread it at ~10% of input price.
-                    "cache_control": {"type": "ephemeral"},
-                }
-            ],
+            "system": build_system_blocks(agent_mode),
             "thinking": {"type": "adaptive"},
             "output_config": {"effort": "high"},
             "tools": TOOLS,
@@ -247,6 +270,7 @@ def run(brief: str, outdir: Path, forced_model: str | None = None) -> int:
 
     metrics = {
         "brief": brief,
+        "agent_mode": agent_mode,
         "model": model,
         "routing": routing,
         "wall_clock_seconds": round(elapsed, 1),
@@ -293,6 +317,15 @@ def main() -> None:
             "or any full model id"
         ),
     )
+    parser.add_argument(
+        "--agent-mode",
+        choices=sorted(AGENT_MODES),
+        default="team",
+        help=(
+            "team (default: use a virtual pod of specialist agents inside the "
+            "same autonomous Claude loop), or direct (single consultant mode)"
+        ),
+    )
     args = parser.parse_args()
 
     forced_model = None
@@ -316,7 +349,7 @@ def main() -> None:
         slug = re.sub(r"[^a-z0-9]+", "-", args.brief.lower()).strip("-")[:60]
         outdir = Path(__file__).parent / "outputs" / slug
 
-    sys.exit(run(args.brief, outdir, forced_model))
+    sys.exit(run(args.brief, outdir, forced_model, args.agent_mode))
 
 
 if __name__ == "__main__":
