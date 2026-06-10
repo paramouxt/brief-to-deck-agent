@@ -11,6 +11,10 @@ and it researches the market, checks sources, builds charts, creates a
 consulting-style deck, writes a sourced Excel appendix, downloads the files, and
 records timing, token, and cost metrics for the run.
 
+**[Read the case study](docs/case-study.md)** — the measured workflow: manual
+baseline, automation design decisions, run metrics, observed failure modes,
+and the path to production.
+
 The default workflow now uses **agent team mode**: a virtual pod of specialist
 agents inside the same Claude tool loop. It is not a swarm of separate Python
 processes or chat windows. It is a structured work mode that asks Claude to
@@ -175,7 +179,8 @@ agent.py                    # routing, orchestration, streaming, downloads, metr
 prompts.py                  # router prompt, base spec, team mode, direct mode
 requirements.txt            # Python dependencies
 .env.example                # API key template
-docs/case_study_template.md # framework for evaluating output quality
+docs/case-study.md          # the case study: baseline, design, results, limitations
+docs/case_study_template.md # blank framework for evaluating output quality
 outputs/                    # generated deliverables, ignored by git
 ```
 
