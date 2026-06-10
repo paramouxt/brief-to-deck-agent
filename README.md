@@ -1,5 +1,7 @@
 # Brief-to-Deck Agent
 
+![Brief-to-Deck Agent hero](docs/assets/brief-to-deck-agent-hero.png)
+
 One-line brief in, client-ready PowerPoint deck plus Excel data appendix out.
 
 ```bash
