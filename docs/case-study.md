@@ -73,20 +73,38 @@ Design decisions that mattered:
 
 ## 4. Results
 
-### Demo run (executed 2026-06-09)
+### Demo runs
 
-Brief: *"India two-wheeler spare parts aftermarket: competitive landscape and
-private-label (own-brand) opportunity for parts distributors."*
+**Run 1 (2026-06-09), landscape brief — would route "standard":** *"India
+two-wheeler spare parts aftermarket: competitive landscape and private-label
+(own-brand) opportunity for parts distributors."*
 
-| Metric | Result | Manual baseline |
-|---|---|---|
-| Wall-clock time | **5.0 minutes** | ~8–16 hours |
-| Deliverables | 12-slide deck + 6-sheet Excel appendix | same scope |
-| Research performed | 7 web searches, full-text fetch, source triangulation | 2–4 h equivalent |
-| Charts | 3 (market sizing, counterfeit share, demand segments) | manual Excel work |
-| Citations | every figure sourced; conflicting estimates shown as ranges | often skipped under time pressure |
+**Run 2 (2026-06-10), forecasting brief — would route "complex":** *"EV
+transition impact on India's two-wheeler spare parts aftermarket: which parts
+categories decline, which emerge, 2026–2030."* Chosen deliberately as a harder
+brief class: scenario modeling rather than descriptive landscape, requiring
+the agent to build a fleet-projection model with explicit assumptions and to
+take a position against official forecasts.
 
-*Transparency note: this run was executed via a Claude Code session on the
+| Metric | Run 1 (landscape) | Run 2 (forecast) | Manual baseline |
+|---|---|---|---|
+| Wall-clock time | **5.0 min** | **4.5 min** | ~8–20 hours |
+| Deliverables | 12-slide deck + 6-sheet appendix | 12-slide deck + 6-sheet appendix | same scope |
+| Research | 7 searches + full-text fetch | 6 searches, cross-period triangulation | 2–5 h equivalent |
+| Analysis | source triangulation, ranges | own fleet-projection model, assumptions on a dedicated sheet | 2–4 h equivalent |
+| Charts | 3 | 3 | manual Excel work |
+| Citations | every figure sourced | every figure sourced; own estimates labeled as such | often skipped |
+
+The forecasting run produced the more interesting behavior: official
+NITI Aayog/TIFAC scenarios ("100% e-2W penetration by FY27") contradict
+observed adoption (6.5% in FY26), and the agent **discounted the official
+source in favor of observed momentum**, stated its own base case (~24% of
+sales by 2030), and documented the assumptions on a dedicated appendix sheet
+so a reviewer can stress-test them. That's the judgment quality the deck
+format is supposed to surface — and it argues for routing forecast briefs to
+a stronger model tier, which is what the router is designed to do.
+
+*Transparency note: both runs were executed via a Claude Code session on the
 same model (Claude Fable 5) and the same workflow as the pipeline, rather
 than through the standalone API script — marginal cost $0 on subscription.
 Pipeline runs are estimated at $0.50–$4.00 depending on the routed tier.*
@@ -146,6 +164,17 @@ useful part:
 - **Paywalled reports cap research depth.** The best data (Ken Research,
   ResearchAndMarkets) sits behind paywalls; the agent works from abstracts and
   press releases. A production version would integrate licensed data sources.
+- **Official sources can be the unreliable ones.** (Run 2.) Government
+  scenario reports projected "100% e-2W penetration by FY27" against an
+  observed 6.5% — authoritative provenance didn't mean forecast quality. The
+  agent handled it correctly (discounted the target, modeled from observed
+  data, labeled its own estimate), but this is exactly the failure mode to
+  spot-check on forecast briefs: an agent that defers to official sources
+  would have built the whole deck on a void premise.
+- **Period-definition traps in fast-moving data.** (Run 2.) EV penetration
+  reads 6.3%, 6.5%, or 8.2% depending on calendar-year, fiscal-year, or
+  monthly cuts — all "correct." The agent showed figures per-period; a
+  careless synthesis would have averaged or cherry-picked them.
 - **Brief sensitivity.** Vague briefs produce generic decks. The workflow
   rewards a well-specified brief — same as a human analyst.
 
